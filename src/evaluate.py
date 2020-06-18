@@ -101,8 +101,9 @@ def vizualise_beat(beat, title=None, color='tab:green'):
     ax.set_ylabel('Voltage in mV', fontsize=18)
 
 
-def vizualise_tensor(tensor, title='img.png'):
+def vizualise_tensor(tensor, title='title'):
     plt.imshow(tensor, interpolation='nearest')
+    plt.title(title)
     plt.show()
 
 
