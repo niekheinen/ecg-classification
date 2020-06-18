@@ -1,5 +1,11 @@
-from signal import *
 import matplotlib.pyplot as plt
+import itertools
+from load_data import *
+from sklearn.metrics import confusion_matrix
+from PIL import Image
+import datetime
+
+aami = ["Normal", "Supraventricular", "Ventricular", "Fusion beat", "Unkown"]
 
 
 def plot_confusion_matrix(cm, classes,
@@ -83,9 +89,28 @@ def get_timestamp(i):
     return datetime.timedelta(seconds=round(i / 360))
 
 
-def print_beat(beat):
+def vizualise_beat(beat, title=None, color='tab:green'):
     fig, ax = plt.subplots()
-    plt.title("{} -- {} -- {} ".format(beat.ba, beat.patient, get_timestamp(beat.start)))
+    if title is None:
+        title = "{} -- {} -- {} ".format(beat.ba, beat.patient, get_timestamp(beat.start))
+    plt.title(title, fontsize=20)
     plt.locator_params(axis='y')
-    ax.plot(beat.signal, '-gD', markevery=[window], mfc='b')
-    ax.set_xlabel('Time')
+    x = [i/360 for i in range(window*2)]
+    ax.plot(x, beat.signal, '-D', markevery=[window], mfc='b', color=color)
+    ax.set_xlabel('Time in s', fontsize=18)
+    ax.set_ylabel('Voltage in mV', fontsize=18)
+
+
+def vizualise_tensor(tensor, title='img.png'):
+    plt.imshow(tensor, interpolation='nearest')
+    plt.show()
+
+
+def print_tensor(tensor):
+    print('--- Start ---')
+    for row in tensor:
+        r = ''
+        for value in row:
+            r += str(value[0]) + '\t'
+        print(r)
+    print('-------------')
