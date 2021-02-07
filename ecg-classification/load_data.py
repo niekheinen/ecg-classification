@@ -50,7 +50,7 @@ class Beat:
         self.patient = int(patient)
 
 
-def load_signal(signal, mid, extend_signal, w=window):
+def format_signal(signal, mid, extend_signal=True, w=window):
     # sel and ser are Signal Extension Left and Right.
     if extend_signal is None:
         sel, ser = None, None
@@ -73,7 +73,7 @@ def load_signal(signal, mid, extend_signal, w=window):
     return left
 
 
-def load_beats(filepath, patients=[], extend_signal=True):
+def load_beats(filepath, patients=[], signal_format='ES'):
     beats, measuretime, end = [], datetime.now(), 0
     for file in os.listdir(filepath):
         if file.endswith('.atr'):
@@ -87,21 +87,50 @@ def load_beats(filepath, patients=[], extend_signal=True):
                         beat.start = end
                         end = int((ann.sample[i] + ann.sample[i + 1]) / 2)
                         beat.end = end
+                        if signal_format == 'OS':
+                            signal = [t[0] for t in record.p_signal[ann.sample[i]-window:ann.sample[i]+window]]
                         signal = [t[0] for t in record.p_signal[beat.start:beat.end]]
-                        beat.signal = load_signal(signal, ann.sample[i] - beat.start, extend_signal)
-                        beat.mid = ann.sample[i] - beat.start
-                        beats.append(beat)
+                        if signal:
+                            if signal_format == 'ES':
+                                beat.signal = format_signal(signal, ann.sample[i] - beat.start, extend_signal=True)
+                            elif signal_format == 'IS':
+                                beat.signal = format_signal(signal, ann.sample[i] - beat.start, extend_signal=None)
+                            elif signal_format == 'MS':
+                                beat.signal = format_signal(signal, ann.sample[i] - beat.start, extend_signal=False)
+                            beat.mid = ann.sample[i] - beat.start
+                            beats.append(beat)
     print('Loading beats took: {}s'.format(round((datetime.now() - measuretime).total_seconds(), 1)))
     return beats
 
 
-def load_data(filepath, extend_signal=True, signal_shape='naive-RGB'):
-    beats = load_beats(filepath, extend_signal)
+def load_beats_naive(filepath, patients=[]):
+    beats, end = [], 0
+    for file in os.listdir(filepath):
+        if file.endswith('.atr'):
+            record = wfdb.rdrecord(filepath + file.split('.')[0])
+            if not patients or int(record.record_name) in patients:
+                ann = wfdb.rdann(filepath + record.record_name, 'atr')
+                for i in range(ann.ann_len - 3):
+                    ba = ann.symbol[i]
+                    if ba in relsym:
+                        beat = Beat(ba, record.record_name)
+                        mid = ann.sample[i]
+                        signal = [t[0] for t in record.p_signal[mid-window:mid+window]]
+                        if signal:
+                            beat.signal = np.asarray(signal)
+                            beat.start = mid - window
+                            beats.append(beat)
+    return beats
+
+
+def load_data(filepath, classes='aami', patients=[], signal_format='ES'):
+    if signal_format == 'OS':
+        beats = load_beats_naive(filepath, patients)
+    else:
+        beats = load_beats(filepath, patients=patients, signal_format=signal_format)
     measuretime = datetime.now()
-    data = {'train': ([], []), 'valid': ([], []), 'tests': ([], [])}
+    data = {'train': [[], []], 'valid': [[], []], 'tests': [[], []]}
     for b in beats:
-        data = signal_reshaper.reshape_signal(b.signal, signal_shape)
-        label = ba_num(b.ba)
         if b.patient in train:
             s = 'train'
         elif b.patient in valid:
@@ -109,11 +138,23 @@ def load_data(filepath, extend_signal=True, signal_shape='naive-RGB'):
         elif b.patient in tests:
             s = 'tests'
         else:
-            raise Exception('Patient not assigned to a dataset')
-        data[s][0].append(data)
+            continue
+        if signal_format == 'IS':
+            tensor = signal_reshaper.reshape_signal0(b.signal)
+        else:
+            print(b.signal.shape)
+            tensor = signal_reshaper.reshape_signal1(b.signal)
+        if classes == 'aami':
+            label = b.aami_num
+        else:
+            label = ba_num(b.ba)
+        data[s][0].append(tensor)
         data[s][1].append(label)
     for k in data:
-        data[k][0] = np.array([k][0])
-        data[k][1] = np.array([k][1])
+        data[k][0] = np.asarray(data[k][0])
+        data[k][1] = np.array(data[k][1])
     print('Reshaping the signals took: {}s'.format(round((datetime.now() - measuretime).total_seconds(), 1)))
     return data
+
+
+
