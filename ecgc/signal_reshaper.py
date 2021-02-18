@@ -1,8 +1,8 @@
-# import matplotlib.pyplot as plt
+
 import numpy as np
-from math import factorial
+
 from sklearn.preprocessing import MinMaxScaler
-import load_data as ld
+
 
 scaler = MinMaxScaler((0, 255))
 scaler2 = MinMaxScaler()

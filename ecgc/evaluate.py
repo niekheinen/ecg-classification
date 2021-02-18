@@ -1,10 +1,12 @@
 import matplotlib.pyplot as plt
 import itertools
-from load_data import *
+
 from sklearn.metrics import confusion_matrix
 import datetime
 from scipy import signal
-import signal_reshaper as sr
+import numpy as np
+
+import ecgc
 
 aami = ["Normal", "Supraventricular", "Ventricular", "Fusion beat", "Unkown"]
 
@@ -73,8 +75,8 @@ def evaluate_model(m, x_tests, y_tests, input_format="ba_num", keras_evaluation=
     if input_format == "ba_num":
         ba_pred = prediction
         ba_true = y_tests
-        aami_pred = [aami_num(relsym[ba]) for ba in ba_pred]
-        aami_true = [aami_num(relsym[ba]) for ba in ba_true]
+        aami_pred = [ecgc.aami_num(ecgc.config.relsym[ba]) for ba in ba_pred]
+        aami_true = [ecgc.aami_num(ecgc.config.relsym[ba]) for ba in ba_true]
     elif input_format == "aami_num":
         aami_pred = prediction
         aami_true = y_tests
@@ -101,7 +103,7 @@ def get_timestamp(i):
 
 
 def vizualise_beat(beat, title=None, color='tab:green', vizualise_derivatives=False):
-    x = [i / 360 for i in range(window * 2)]
+    x = [i / 360 for i in range(ecgc.config.window * 2)]
     if vizualise_derivatives:
         fig, ax = plt.subplots(nrows=2, ncols=2)
         fig.suptitle(title, fontsize=20)
@@ -120,7 +122,7 @@ def vizualise_beat(beat, title=None, color='tab:green', vizualise_derivatives=Fa
             title = "{} -- {} -- {} ".format(beat.ba, beat.patient, get_timestamp(beat.start))
         plt.title(title, fontsize=20)
         plt.locator_params(axis='y')
-        ax.plot(x, beat.signal, '-D', markevery=[window], mfc='b', color=color)
+        ax.plot(x, beat.signal, '-D', markevery=[ecgc.config.window], mfc='b', color=color)
         ax.set_xlabel('Time in s', fontsize=18)
         ax.set_ylabel('Voltage in mV', fontsize=18)
         plt.show()
