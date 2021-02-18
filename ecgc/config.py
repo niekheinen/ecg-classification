@@ -1,6 +1,6 @@
 # All variables used to configure the project
 
-# Frequency of ECG signal in Hz
+# Desired frequency of ECG signal in Hz
 signal_frequency = 720
 
 # With an ECG signal frequency of 720 Hz, this means the window is 1024/720 = 1.4222s

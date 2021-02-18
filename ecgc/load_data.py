@@ -38,6 +38,7 @@ class Beat:
 
 
 def format_signal(signal, mid, extend_signal=True, half_window=config.hw):
+    signal = list(signal)
     if not signal:
         return None
     if extend_signal is None:
@@ -74,20 +75,23 @@ def load_beats(filepath, patients=[], signal_format='ES'):
 
             ann = wfdb.rdann(filepath + record.record_name, 'atr')
             signal = np.array([i[0] for i in record.p_signal])
-            signal, ann_sample = resample(signal, int(config.signal_frequency / 360) * len(signal), ann.sample)
+            scale = config.signal_frequency / 360
+            signal = resample(signal, int(scale * len(signal)))
+
+            ann_sample = [int(i*scale) for i in ann.sample]
 
             for i in range(ann.ann_len - 3):
                 ba = ann.symbol[i]
                 if ba in config.relsym:
                     beat = Beat(ba, record.record_name)
                     beat.start = end
-                    end = int((ann.sample[i] + ann.sample[i + 1]) / 2)
+                    end = int((ann_sample[i] + ann_sample[i + 1]) / 2)
                     beat.end = end
                     if signal_format == 'OS':
-                        beat.signal = signal[ann.sample[i] - config.hw:ann.sample[i] + config.hw]
+                        beat.signal = signal[ann_sample[i] - config.hw:ann_sample[i] + config.hw]
                     else:
-                        beat_signal = [t[0] for t in record.p_signal[beat.start:beat.end]]
-                        beat.mid = ann.sample[i] - beat.start
+                        beat_signal = signal[beat.start:beat.end]
+                        beat.mid = ann_sample[i] - beat.start
                         if signal_format == 'ES':
                             extend_signal = True
                         elif signal_format == 'IS':
