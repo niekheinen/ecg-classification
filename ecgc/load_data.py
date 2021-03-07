@@ -125,8 +125,7 @@ def load_data(filepath, classes='aami', patients=[], signal_format='ES'):
         if signal_format == 'IS':
             tensor = sr.reshape_signal0(b.signal)
         else:
-            print(b.signal.shape)
-            tensor = sr.reshape_signal1(b.signal)
+            tensor = sr.to_tensor(b.signal)
         if classes == 'aami':
             label = b.aami_num
         else:

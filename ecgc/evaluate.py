@@ -139,7 +139,7 @@ def vizualise_tensor(tensor, title='title', vizualise_channels=False):
         plt.show()
     else:
         plt.imshow(tensor, interpolation='nearest')
-        plt.title(title+' signal', fontsize=20)
+        plt.title(str(title)+' signal', fontsize=20)
         plt.ylabel('Pixel height', fontsize=18)
         plt.xlabel('Pixel length', fontsize=18)
         plt.show()
