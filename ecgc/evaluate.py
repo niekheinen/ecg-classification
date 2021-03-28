@@ -46,6 +46,7 @@ def plot_confusion_matrix(cm, classes,
     plt.xlabel('Predicted label')
 
 
+# Calcuate VEB/SVEB metrics
 def calculate_metrics(cm, class_type):
     if class_type == 'VEB':
         tn = sum(cm[0]) - cm[0][2] + sum(cm[1]) - cm[1][2] + sum(cm[3]) - cm[3][2] + sum(cm[4]) - cm[4][2]
@@ -101,7 +102,7 @@ def print_metrics(pred, true):
 
 
 def get_timestamp(i):
-    return datetime.timedelta(seconds=round(i / 360))
+    return datetime.timedelta(seconds=round(i / config.signal_frequency))
 
 
 def vizualise_beat(beat, title=None, color='tab:green', vizualise_channels=False):
@@ -153,14 +154,3 @@ def vizualise_tensor(tensor, title='title', vizualise_channels=False):
         plt.xlabel('Pixel length', fontsize=18)
         plt.show()
 
-
-def vizualise_spectogram(beat):
-    fig, ax = plt.subplots()
-    f, t, sxx = signal.spectrogram(np.array(beat.signal), 360)
-    print(f.shape)
-    print(t.shape)
-    print(sxx.shape)
-    plt.pcolormesh(t, f, sxx)
-    ax.set_ylabel('Frequency [Hz]')
-    ax.set_xlabel('Time [sec]')
-    plt.show()
