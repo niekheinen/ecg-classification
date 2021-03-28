@@ -7,6 +7,8 @@ from scipy import signal
 import numpy as np
 
 import ecgc
+import ecgc.config as config
+from scipy.signal import savgol_filter
 
 aami = ["Normal", "Supraventricular", "Ventricular", "Fusion beat", "Unkown"]
 
@@ -102,19 +104,26 @@ def get_timestamp(i):
     return datetime.timedelta(seconds=round(i / 360))
 
 
-def vizualise_beat(beat, title=None, color='tab:green', vizualise_derivatives=False):
+def vizualise_beat(beat, title=None, color='tab:green', vizualise_channels=False):
     x = [i / ecgc.config.signal_frequency for i in range(ecgc.config.window)]
-    if vizualise_derivatives:
+    if vizualise_channels:
+        x = [i / config.signal_frequency for i in range(config.window)]
         fig, ax = plt.subplots(nrows=2, ncols=2)
-        fig.suptitle(title, fontsize=20)
-        d = beat.signal
-        ax[0, 0].plot(x, d, color='tab:red')
-        d = np.append(np.diff(d), 0)
-        ax[0, 1].plot(x, d, color='tab:green')
-        d = np.append(np.diff(d), 0)
-        ax[1, 0].plot(x, d, color='tab:blue')
-        d = np.append(np.diff(d), 0)
-        ax[1, 1].plot(x, d, color='tab:orange')
+        signal = beat.signal
+        ax[0, 0].title.set_text('Extended signal ({})'.format(title))
+        ax[0, 0].plot(x, signal, color='tab:red')
+        sg = savgol_filter(beat.signal, 25, 2)
+        ax[0, 1].title.set_text('savgol(red)')
+        ax[0, 1].plot(x, sg, color='tab:orange')
+        blue = [abs(i) for i in (signal - sg)]
+        blue = savgol_filter(blue, 101, 2)
+        ax[1, 0].set_ylim(0.01, 0.05)
+        ax[1, 0].title.set_text('abs(red - orange)')
+        ax[1, 0].plot(x, blue, color='tab:green')
+        orange = savgol_filter(blue, 101, 2)
+        ax[1, 1].title.set_text('savgol(green)')
+        ax[1, 1].plot(x, orange, color='tab:blue')
+        plt.tight_layout()
         plt.show()
     else:
         fig, ax = plt.subplots()
@@ -143,16 +152,6 @@ def vizualise_tensor(tensor, title='title', vizualise_channels=False):
         plt.ylabel('Pixel height', fontsize=18)
         plt.xlabel('Pixel length', fontsize=18)
         plt.show()
-
-
-def print_tensor(tensor):
-    print('--- Start ---')
-    for row in tensor:
-        r = ''
-        for value in row:
-            r += str(value[0]) + '\t'
-        print(r)
-    print('-------------')
 
 
 def vizualise_spectogram(beat):
