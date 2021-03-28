@@ -103,7 +103,7 @@ def get_timestamp(i):
 
 
 def vizualise_beat(beat, title=None, color='tab:green', vizualise_derivatives=False):
-    x = [i / 360 for i in range(ecgc.config.window * 2)]
+    x = [i / ecgc.config.signal_frequency for i in range(ecgc.config.window)]
     if vizualise_derivatives:
         fig, ax = plt.subplots(nrows=2, ncols=2)
         fig.suptitle(title, fontsize=20)
@@ -122,7 +122,7 @@ def vizualise_beat(beat, title=None, color='tab:green', vizualise_derivatives=Fa
             title = "{} -- {} -- {} ".format(beat.ba, beat.patient, get_timestamp(beat.start))
         plt.title(title, fontsize=20)
         plt.locator_params(axis='y')
-        ax.plot(x, beat.signal, '-D', markevery=[ecgc.config.window], mfc='b', color=color)
+        ax.plot(x, beat.signal, '-D', markevery=[int(ecgc.config.window/2)], mfc='b', color=color)
         ax.set_xlabel('Time in s', fontsize=18)
         ax.set_ylabel('Voltage in mV', fontsize=18)
         plt.show()
